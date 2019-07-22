@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/scale"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 

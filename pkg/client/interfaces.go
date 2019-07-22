@@ -100,11 +100,31 @@ type StatusWriter interface {
 	Patch(ctx context.Context, obj runtime.Object, patch Patch, opts ...PatchOption) error
 }
 
+// ScaleClient knows how to create a client which can update status subresource
+// for kubernetes objects.
+type ScaleClient interface {
+	Scale() ScaleWriter
+}
+
+// ScaleWriter knows how to update scale subresource of a Kubernetes object.
+type ScaleWriter interface {
+	/// Get retrieves the scale rubresource for the given object key from the Kubernetes Cluster.
+	// obj must be a struct pointer so that obj can be updated with the response
+	// returned by the Server.
+	Get(ctx context.Context, key ObjectKey, obj runtime.Object) error
+
+	// Update updates the fields corresponding to the scale subresource for the
+	// given obj. obj must be a struct pointer so that obj can be updated
+	// with the content returned by the Server.
+	Update(ctx context.Context, obj runtime.Object, opts ...UpdateOptionFunc) error
+}
+
 // Client knows how to perform CRUD operations on Kubernetes objects.
 type Client interface {
 	Reader
 	Writer
 	StatusClient
+	ScaleClient
 }
 
 // IndexerFunc knows how to take an object and turn it into a series

@@ -208,3 +208,39 @@ func (c *typedClient) PatchStatus(ctx context.Context, obj runtime.Object, patch
 		Do().
 		Into(obj)
 }
+
+// UpdateScale used by StatusWriter to write scale.
+func (c *typedClient) UpdateScale(ctx context.Context, obj runtime.Object, opts ...UpdateOptionFunc) error {
+	o, err := c.cache.getObjMeta(obj)
+	if err != nil {
+		return err
+	}
+
+	return o.Put().
+		NamespaceIfScoped(o.GetNamespace(), o.isNamespaced()).
+		Resource(o.resource()).
+		Name(o.GetName()).
+		SubResource("scale").
+		Body(obj).
+		VersionedParams((&UpdateOptions{}).ApplyOptions(opts).AsUpdateOptions(), c.paramCodec).
+		Context(ctx).
+		Do().
+		Into(obj)
+}
+
+// GetScale used by ScaleWriter to fetch scale.
+func (c *typedClient) GetScale(ctx context.Context, key ObjectKey, obj runtime.Object) error {
+	o, err := c.cache.getObjMeta(obj)
+	if err != nil {
+		return err
+	}
+
+	return o.Get().
+		NamespaceIfScoped(o.GetNamespace(), o.isNamespaced()).
+		Resource(o.resource()).
+		Name(o.GetName()).
+		SubResource("scale").
+		Context(ctx).
+		Do().
+		Into(obj)
+}

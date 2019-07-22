@@ -211,3 +211,34 @@ func (sw *statusWriter) Patch(ctx context.Context, obj runtime.Object, patch Pat
 	}
 	return sw.client.typedClient.PatchStatus(ctx, obj, patch, opts...)
 }
+
+// Scale implements client.ScaleClient
+func (c *client) Scale() ScaleWriter {
+	return &scaleWriter{client: c}
+}
+
+// scaleWriter is client.ScaleWriter that writes status subresource
+type scaleWriter struct {
+	client *client
+}
+
+// ensure scaleWriter implements client.ScaleWriter
+var _ ScaleWriter = &scaleWriter{}
+
+// Update implements client.ScaleWriter
+func (sw *scaleWriter) Update(ctx context.Context, obj runtime.Object, opts ...UpdateOptionFunc) error {
+	_, ok := obj.(*unstructured.Unstructured)
+	if ok {
+		return sw.client.unstructuredClient.UpdateScale(ctx, obj, opts...)
+	}
+	return sw.client.typedClient.UpdateScale(ctx, obj, opts...)
+}
+
+// Get implements client.ScaleWriter
+func (sw *scaleWriter) Get(ctx context.Context, key ObjectKey, obj runtime.Object) error {
+	_, ok := obj.(*unstructured.Unstructured)
+	if ok {
+		return sw.client.unstructuredClient.GetScale(ctx, key, obj)
+	}
+	return sw.client.typedClient.GetScale(ctx, key, obj)
+}

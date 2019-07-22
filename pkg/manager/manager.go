@@ -97,6 +97,11 @@ type Options struct {
 	// idea to pass your own scheme in.  See the documentation in pkg/scheme for more information.
 	Scheme *runtime.Scheme
 
+	// ScaleScheme is used for handling the scale subresource. Due to the variety of GroupVersions
+	// corresponding to the Scale subresource, this is required to figure out the desired versions
+	// and handle conversion.
+	ScaleScheme *runtime.Scheme
+
 	// MapperProvider provides the rest mapper used to map go types to Kubernetes APIs
 	MapperProvider func(c *rest.Config) (meta.RESTMapper, error)
 
@@ -302,6 +307,11 @@ func setOptionsDefaults(options Options) Options {
 		options.Scheme = scheme.Scheme
 	}
 
+	// Use the default client-go scale scheme if none is specified
+	if options.Scheme == nil {
+		options.Scheme = scheme.Scheme
+	}
+
 	if options.MapperProvider == nil {
 		options.MapperProvider = apiutil.NewDiscoveryRESTMapper
 	}
@@ -343,4 +353,28 @@ func setOptionsDefaults(options Options) Options {
 	}
 
 	return options
+}
+
+func defaultScaleScheme() *runtime.Scheme {
+	scheme := runtime.NewScheme()
+	scheme := runtime.NewScheme()
+	utilruntime.Must(scaleautoscaling.AddToScheme(scheme))
+	utilruntime.Must(scalescheme.AddToScheme(scheme))
+	utilruntime.Must(scaleext.AddToScheme(scheme))
+	utilruntime.Must(scaleextint.AddToScheme(scheme))
+	utilruntime.Must(scaleappsint.AddToScheme(scheme))
+	utilruntime.Must(scaleappsv1beta1.AddToScheme(scheme))
+	utilruntime.Must(scaleappsv1beta2.AddToScheme(scheme))
+
+	return &ScaleConverter{
+		scheme: scheme,
+		codecs: serializer.NewCodecFactory(scheme),
+		internalVersioner: runtime.NewMultiGroupVersioner(
+			scalescheme.SchemeGroupVersion,
+			schema.GroupKind{Group: scaleext.GroupName, Kind: "Scale"},
+			schema.GroupKind{Group: scaleautoscaling.GroupName, Kind: "Scale"},
+			schema.GroupKind{Group: scaleappsv1beta1.GroupName, Kind: "Scale"},
+			schema.GroupKind{Group: scaleappsv1beta2.GroupName, Kind: "Scale"},
+		),
+	}
 }
