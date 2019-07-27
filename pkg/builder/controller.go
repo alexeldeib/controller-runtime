@@ -48,6 +48,7 @@ type Builder struct {
 	config         *rest.Config
 	ctrl           controller.Controller
 	name           string
+	concurrency    int
 }
 
 // SimpleController returns a new Builder.
@@ -132,6 +133,13 @@ func (blder *Builder) WithEventFilter(p predicate.Predicate) *Builder {
 // By default, controllers are named using the lowercase version of their kind.
 func (blder *Builder) Named(name string) *Builder {
 	blder.name = name
+	return blder
+}
+
+// Concurrency sets the number of concurrent reconciles allowed by this controller.
+// It defaults to 1 if not specified
+func (blder *Builder) Concurrency(concurrency int) *Builder {
+	blder.concurrency = concurrency
 	return blder
 }
 
@@ -241,6 +249,9 @@ func (blder *Builder) doController(r reconcile.Reconciler) error {
 	if err != nil {
 		return err
 	}
-	blder.ctrl, err = newController(name, blder.mgr, controller.Options{Reconciler: r})
+	if blder.concurrency <= 0 {
+		blder.concurrency = 1
+	}
+	blder.ctrl, err = newController(name, blder.mgr, controller.Options{Reconciler: r, MaxConcurrentReconciles: blder.concurrency})
 	return err
 }
