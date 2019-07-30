@@ -17,6 +17,7 @@ limitations under the License.
 package client
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -26,8 +27,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/scale"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
@@ -44,6 +45,8 @@ type clientCache struct {
 
 	// codecs are used to create a REST client for a gvk
 	codecs serializer.CodecFactory
+
+	discoveryClient *discovery.DiscoveryClient
 
 	// resourceByType caches type metadata
 	resourceByType map[reflect.Type]*resourceMeta
@@ -143,4 +146,31 @@ type objMeta struct {
 
 	// Object contains meta data for the object instance
 	metav1.Object
+}
+
+func (c *clientCache) scaleForResource(inputRes schema.GroupVersionResource) (scaleVersion schema.GroupVersionKind, err error) {
+	groupVerResources, err := c.discoveryClient.ServerResourcesForGroupVersion(inputRes.GroupVersion().String())
+	if err != nil {
+		return schema.GroupVersionKind{}, fmt.Errorf("unable to fetch discovery information for %s: %v", inputRes.String(), err)
+	}
+
+	for _, resource := range groupVerResources.APIResources {
+		resourceParts := strings.SplitN(resource.Name, "/", 2)
+		if len(resourceParts) != 2 || resourceParts[0] != inputRes.Resource || resourceParts[1] != "scale" {
+			// skip non-scale resources, or scales for resources that we're not looking for
+			continue
+		}
+
+		scaleGV := inputRes.GroupVersion()
+		if resource.Group != "" && resource.Version != "" {
+			scaleGV = schema.GroupVersion{
+				Group:   resource.Group,
+				Version: resource.Version,
+			}
+		}
+
+		return scaleGV.WithKind(resource.Kind), nil
+	}
+
+	return schema.GroupVersionKind{}, fmt.Errorf("could not find scale subresource for %s in discovery information", inputRes.String())
 }

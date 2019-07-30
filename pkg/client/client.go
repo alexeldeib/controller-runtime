@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -75,14 +76,20 @@ func New(config *rest.Config, options Options) (Client, error) {
 		return nil, err
 	}
 
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	c := &client{
 		typedClient: typedClient{
 			cache: clientCache{
-				config:         config,
-				scheme:         options.Scheme,
-				mapper:         options.Mapper,
-				codecs:         serializer.NewCodecFactory(options.Scheme),
-				resourceByType: make(map[reflect.Type]*resourceMeta),
+				config:          config,
+				scheme:          options.Scheme,
+				mapper:          options.Mapper,
+				codecs:          serializer.NewCodecFactory(options.Scheme),
+				resourceByType:  make(map[reflect.Type]*resourceMeta),
+				discoveryClient: discoveryClient,
 			},
 			paramCodec: runtime.NewParameterCodec(options.Scheme),
 		},
