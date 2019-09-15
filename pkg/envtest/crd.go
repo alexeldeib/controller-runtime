@@ -54,7 +54,7 @@ type CRDInstallOptions struct {
 }
 
 const defaultPollInterval = 100 * time.Millisecond
-const defaultMaxWait = 10 * time.Second
+const defaultMaxWait = 60 * time.Second
 
 // InstallCRDs installs a collection of CRDs into a cluster by reading the crd yaml files from a directory
 func InstallCRDs(config *rest.Config, options CRDInstallOptions) ([]*apiextensionsv1beta1.CustomResourceDefinition, error) {
