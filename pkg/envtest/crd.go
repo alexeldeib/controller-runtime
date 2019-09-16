@@ -166,6 +166,9 @@ func (p *poller) poll() (done bool, err error) {
 		// Get the Resources for this GroupVersion
 		// TODO: Maybe the controller-runtime client should be able to do this...
 		resourceList, err := cs.Discovery().ServerResourcesForGroupVersion(gv.Group + "/" + gv.Version)
+		fmt.Printf("group/version: %s/%s\n", gv.Group, gv.Version)
+		litter.Dump("resources")
+		litter.Dump(resources)
 		fmt.Printf("error: %+#v\n", err)
 		litter.Dump(resourceList)
 		if err != nil {
