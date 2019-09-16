@@ -182,6 +182,9 @@ func (p *poller) poll() (done bool, err error) {
 
 		// Still waiting on some resources in this group version
 		if resources.Len() != 0 {
+			for _, resource := range resources.List() {
+				log.V(1).Info("still waiting for resource", "resource", resource)
+			}
 			allFound = false
 		}
 	}
