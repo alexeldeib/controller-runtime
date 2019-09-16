@@ -19,6 +19,7 @@ package envtest
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -33,6 +34,8 @@ import (
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
+
+	"github.com/sanity-io/litter"
 )
 
 // CRDInstallOptions are the options for installing CRDs
@@ -163,6 +166,8 @@ func (p *poller) poll() (done bool, err error) {
 		// Get the Resources for this GroupVersion
 		// TODO: Maybe the controller-runtime client should be able to do this...
 		resourceList, err := cs.Discovery().ServerResourcesForGroupVersion(gv.Group + "/" + gv.Version)
+		fmt.Printf("error: %+#v\n", err)
+		litter.Dump(resourceList)
 		if err != nil {
 			return false, nil
 		}
