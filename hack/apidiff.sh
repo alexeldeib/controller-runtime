@@ -26,13 +26,17 @@ cd "${REPO_ROOT}"
 APIDIFF="hack/tools/bin/go-apidiff"
 
 header_text "fetching tools"
-
 make "${APIDIFF}"
+
 git status
+
+ls -l hack
+ls -l hack/tools
+ls -l hack/tools/bin
 
 # git checkout HEAD -- "hack/tools/go.sum"
 # git clean -xdf
 
 header_text "verifying api diff"
 header_text "invoking: '../go-apidiff ${PULL_BASE_SHA} --print-compatible'"
-"./${APIDIFF}" "${PULL_BASE_SHA}" --print-compatible
+"${APIDIFF}" "${PULL_BASE_SHA}" --print-compatible
