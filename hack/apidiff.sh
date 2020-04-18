@@ -30,8 +30,8 @@ header_text "fetching tools"
 make "${APIDIFF}"
 git status
 
-git reset --hard -- "hack/tools/go.sum"
-git clean -xdf
+git checkout HEAD -- "hack/tools/go.sum"
+# git clean -xdf
 
 header_text "verifying api diff"
 header_text "invoking: '../go-apidiff ${PULL_BASE_SHA} --print-compatible'"
