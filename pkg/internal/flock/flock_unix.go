@@ -1,5 +1,7 @@
+// +build linux darwin freebsd openbsd netbsd dragonfly
+
 /*
-Copyright 2018 The Kubernetes Authors.
+Copyright 2016 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,15 +16,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package builder wraps other controller-runtime libraries and exposes simple
-// patterns for building common Controllers.
-//
-// Projects built with the builder package can trivially be rebased on top of the underlying
-// packages if the project requires more customized behavior in the future.
-package builder
+package flock
 
-import (
-	logf "sigs.k8s.io/controller-runtime/pkg/internal/log"
-)
+import "golang.org/x/sys/unix"
 
-var log = logf.RuntimeLog.WithName("builder")
+// Acquire acquires a lock on a file for the duration of the process. This method
+// is reentrant.
+func Acquire(path string) error {
+	fd, err := unix.Open(path, unix.O_CREAT|unix.O_RDWR|unix.O_CLOEXEC, 0600)
+	if err != nil {
+		return err
+	}
+
+	// We don't need to close the fd since we should hold
+	// it until the process exits.
+
+	return unix.Flock(fd, unix.LOCK_EX)
+}
